@@ -1,0 +1,28 @@
+# ============================================
+# CONFIG DO COORDENADOR (faz polling do Telegram)
+# ============================================
+# Copie este arquivo como config.yaml e preencha
+# os valores reais de cada servidor.
+# ============================================
+
+server_name: "meu-servidor"
+listen_port: 9700
+is_coordinator: true
+
+telegram:
+  token: "SEU_TOKEN_AQUI"
+  allowed_chat_ids:
+    - 123456789
+
+peers:
+  servidor-a: "http://IP_DO_SERVIDOR_A:9700"
+  servidor-b: "http://IP_DO_SERVIDOR_B:9700"
+
+skills_dir: "skills"
+scan_interval_hours: 24
+auto_notify: true
+
+logging:
+  log_dir: "/var/log/update-agent"
+  max_size_mb: 10
+  retention_days: 30

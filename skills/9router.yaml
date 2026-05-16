@@ -1,0 +1,88 @@
+software:
+  name: "9router"
+  type: "docker"
+  current_version: "3.2.1"
+  install_path: "/opt/9router"
+
+detection:
+  method: "docker"
+  version_command: "docker inspect 9router-api --format '{{.Config.Image}}' | cut -d: -f2"
+  version_regex: "(\\d+\\.\\d+\\.\\d+)"
+  docker:
+    container_name: "9router-api"
+    image_name: "9router/api"
+
+backup:
+  enabled: true
+  destination: "/opt/backups/9router"
+  retention_days: 30
+  filesystem:
+    paths:
+      - "/opt/9router/config.yaml"
+      - "/opt/9router/data/routes"
+  docker:
+    commit_image: true
+    export_container: true
+    volumes:
+      - "9router_config:/opt/backups/9router/config"
+      - "9router_data:/opt/backups/9router/data"
+  database:
+    type: "postgres"
+    host: "localhost"
+    port: 5432
+    database: "9router"
+    user: "postgres"
+    dump_path: "/opt/backups/9router/db"
+
+update:
+  method: "docker"
+  docker:
+    container_name: "9router-api"
+    image: "9router/api:latest"
+    compose_file: "/opt/9router/docker-compose.yml"
+    compose_service: "api"
+    pull_image: true
+    force_recreate: true
+  pre_update_hooks:
+    - "docker stop 9router-api 2>/dev/null || true"
+  post_update_hooks:
+    - "docker system prune -f --filter 'label=9router' 2>/dev/null || true"
+
+validation:
+  commands:
+    - "curl -s http://localhost:9090/health | grep -q '\"status\":\"ok\"'"
+    - "docker ps --filter name=9router-api --filter status=running --format '{{.Names}}' | grep -q 9router-api"
+    - "docker inspect 9router-api --format '{{.State.Health.Status}}' 2>/dev/null | grep -q healthy || curl -s http://localhost:9090/health | grep -q ok"
+  expected:
+    - "health check ok"
+    - "container running"
+    - "container healthy"
+
+history:
+  - date: "2026-05-10"
+    from_version: "3.1.0"
+    to_version: "3.2.0"
+    status: partial
+    notes: >
+      Breaking change no formato do arquivo de rotas.
+      Precisou rodar script de migração manual dentro do container.
+      Adicionado health check na validação.
+    adaptations:
+      - "Script de migração adicionado à image nova"
+      - "Health check configurado no docker-compose"
+  - date: "2026-04-20"
+    from_version: "3.0.0"
+    to_version: "3.1.0"
+    status: success
+    notes: "Pull da imagem e recreate sem problemas."
+    adaptations: []
+  - date: "2026-03-15"
+    from_version: "2.9.0"
+    to_version: "3.0.0"
+    status: fail
+    notes: >
+      Container não subiu após update — imagem nova exigia
+      variável DATABASE_URL que não estava no .env.
+    adaptations:
+      - "Adicionado .env.example com DATABASE_URL"
+      - "Criado hook de validação de env vars antes do update"

@@ -1,0 +1,60 @@
+software:
+  name: "NomeDoSoftware"
+  type: "custom"                        # custom, docker, git_repo, pip_package, npm_package, windows_application
+  current_version: "1.0.0"
+  install_path: "/opt/meuapp"
+
+detection:
+  method: "command"                     # command, file, registry, docker
+  version_command: "meuapp --version"
+  version_regex: "v?(\\d+\\.\\d+\\.\\d+)"
+  docker:                               # usado se method = docker
+    container_name: "meuapp"
+    image_name: "meuapp/meuapp"
+
+backup:
+  enabled: true
+  destination: "/opt/backups/meuapp"
+  retention_days: 30
+  filesystem:                           # backup de arquivos/pastas
+    paths:
+      - "/opt/meuapp/data"
+      - "/opt/meuapp/config.yaml"
+  docker:                               # backup de container docker
+    commit_image: true                  # docker commit do container
+    export_container: true              # docker export para .tar
+    volumes:
+      - "meuapp_data:/opt/backups/volumes"
+  database:                             # backup de banco de dados
+    type: "postgres"                    # postgres, mysql, mongo
+    host: "localhost"
+    port: 5432
+    database: "meuapp"
+    user: "postgres"
+    dump_path: "/opt/backups/db"
+
+update:
+  method: "manual"                      # manual, command, git_pull, pip, npm, docker
+  source_url: ""
+  update_command: ""                    # usado se method = command
+  package_name: ""                      # usado se method = pip/npm
+  repo_path: ""                         # usado se method = git_pull
+  docker:                               # usado se method = docker
+    container_name: "meuapp"
+    image: "meuapp/meuapp:latest"
+    compose_file: "/opt/meuapp/docker-compose.yml"
+    compose_service: "app"
+    pull_image: true
+    force_recreate: true
+  pre_update_hooks:
+    - ""
+  post_update_hooks:
+    - ""
+
+validation:
+  commands:
+    - "meuapp --version"
+  expected:
+    - ""
+
+history: []

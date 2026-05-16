@@ -1,0 +1,40 @@
+software:
+  name: "app-web-node"     # Nome usado nos comandos: /update app-web-node@server
+  type: "git_repo"
+  current_version: "2.5.0"
+  install_path: "/opt/app-web"
+
+detection:
+  method: "command"
+  version_command: "cat /opt/app-web/package.json | grep -o '\"version\": \"[^\"]*\"' | cut -d'\"' -f4"
+  version_regex: "(\\d+\\.\\d+\\.\\d+)"
+
+backup:
+  enabled: true
+  destination: "/opt/backups/app-web"
+  retention_days: 14
+  filesystem:
+    paths:
+      - "/opt/app-web/.env"
+      - "/opt/app-web/uploads/"
+
+update:
+  method: "git_pull"
+  repo_path: "/opt/app-web"
+  pre_update_hooks:
+    - "systemctl stop app-web"
+  post_update_hooks:
+    - "cd /opt/app-web && npm install --production"
+    - "cd /opt/app-web && npm run build"
+    - "systemctl start app-web"
+    - "sleep 5 && systemctl is-active --quiet app-web || systemctl restart app-web"
+
+validation:
+  commands:
+    - "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000 | grep -q 200"
+    - "journalctl -u app-web --since '30 seconds ago' --no-pager | grep -q 'started'"
+  expected:
+    - "HTTP 200"
+    - "serviço ativo"
+
+history: []

@@ -1,0 +1,18 @@
+# ============================================
+# CONFIG DO WORKER (sem Telegram, só listener HTTP)
+# ============================================
+# Copie este arquivo como config.yaml nos servidores
+# que não têm o token do Telegram.
+# ============================================
+
+server_name: "meu-worker"
+listen_port: 9700
+is_coordinator: false
+
+skills_dir: "skills"
+scan_interval_hours: 24
+
+logging:
+  log_dir: "/var/log/update-agent"
+  max_size_mb: 10
+  retention_days: 30

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
+venv/
+.venv/
+
+# Config (contém tokens do Telegram, IPs, senhas)
+config.yaml
+config.worker.yaml
+
+# Logs
+agent*.log
+*.log
+!config.yaml.example
+
+# Runtime
+memory/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

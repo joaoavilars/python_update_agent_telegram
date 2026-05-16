@@ -1,0 +1,75 @@
+software:
+  name: "wordpress-blog"
+  type: "docker"
+  current_version: "6.7.2"
+  install_path: "/opt/wordpress"
+
+detection:
+  method: "docker"
+  version_command: "docker exec wordpress wp core version 2>/dev/null || docker inspect wordpress --format '{{.Config.Image}}' | cut -d: -f2"
+  version_regex: "(\\d+\\.\\d+\\.\\d+)"
+  docker:
+    container_name: "wordpress"
+    image_name: "wordpress"
+
+backup:
+  enabled: true
+  destination: "/opt/backups/wordpress"
+  retention_days: 14
+  filesystem:
+    paths:
+      - "/opt/wordpress/wp-content/uploads"
+      - "/opt/wordpress/wp-config.php"
+  docker:
+    export_container: true
+    volumes:
+      - "wordpress_data:/opt/backups/wordpress/data"
+  database:
+    type: "mysql"
+    host: "db"
+    port: 3306
+    database: "wordpress"
+    user: "root"
+    password_env: "MYSQL_ROOT_PASSWORD"
+
+update:
+  method: "docker"
+  docker:
+    container_name: "wordpress"
+    image: "wordpress:latest"
+    compose_file: "/opt/wordpress/docker-compose.yml"
+    compose_service: "wordpress"
+    pull_image: true
+    force_recreate: true
+  pre_update_hooks:
+    - "docker exec wordpress wp maintenance-mode activate 2>/dev/null || true"
+  post_update_hooks:
+    - "docker exec wordpress wp core update-db 2>/dev/null || true"
+    - "docker exec wordpress wp plugin update --all 2>/dev/null || true"
+    - "docker exec wordpress wp maintenance-mode deactivate 2>/dev/null || true"
+
+validation:
+  commands:
+    - "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080 | grep -q 200"
+    - "docker ps --filter name=wordpress --filter status=running --format '{{.Names}}' | grep -q wordpress"
+  expected:
+    - "HTTP 200 OK"
+    - "container running"
+
+history:
+  - date: "2026-05-14"
+    from_version: "6.6.0"
+    to_version: "6.7.0"
+    status: success
+    notes: "Pull da imagem e compose up sem problemas. Plugins atualizados automaticamente."
+    adaptations: []
+  - date: "2026-04-20"
+    from_version: "6.5.0"
+    to_version: "6.6.0"
+    status: partial
+    notes: >
+      Plugin 'meu-plugin-personalizado' quebrou compatibilidade.
+      Foi preciso desativar e aguardar atualização do plugin.
+    adaptations:
+      - "Adicionado hook de update de plugins no post_update"
+      - "Plugin incompatível documentado no histórico"

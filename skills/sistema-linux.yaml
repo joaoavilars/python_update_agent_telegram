@@ -1,0 +1,36 @@
+software:
+  name: "sistema-linux"
+  type: "custom"
+  current_version: "0"       # 0 = sem atualizações pendentes
+
+detection:
+  method: "command"
+  version_command: >
+    apt list --upgradable 2>/dev/null | grep -c upgradable || echo 0
+  version_regex: "^(\\d+)"
+
+backup:
+  enabled: true
+  destination: "/opt/backups/sistema"
+  retention_days: 7
+  filesystem:
+    paths:
+      - "/etc/apt/sources.list"
+      - "/etc/apt/sources.list.d/"
+
+update:
+  method: "command"
+  update_command: "apt update -qq && apt upgrade -y && apt autoremove -y"
+  pre_update_hooks:
+    - "apt update -qq 2>/dev/null || true"
+  post_update_hooks:
+    - "apt autoremove -y 2>/dev/null || true"
+    - "snap refresh 2>/dev/null || true"
+
+validation:
+  commands:
+    - "apt list --upgradable 2>/dev/null | grep -c upgradable | grep -q '^0$'"
+  expected:
+    - "0 pacotes pendentes"
+
+history: []
