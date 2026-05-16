@@ -26,3 +26,10 @@ logging:
   log_dir: "/var/log/update-agent"
   max_size_mb: 10
   retention_days: 30
+
+evolution_api:
+  enabled: false
+  base_url: "http://IP_EVOLUTION_API:8080"
+  api_key: "SEU_API_KEY"
+  instance: "minha-instancia"
+  group_jid: "5511999999999-123456@g.us"

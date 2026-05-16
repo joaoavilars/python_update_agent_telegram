@@ -103,6 +103,37 @@ scan_interval_hours: 24
 | `logging.max_size_mb` | não | Tamanho máximo por arquivo de log (default: 10MB) |
 | `logging.retention_days` | não | Dias de retenção dos logs (default: 30) |
 
+### WhatsApp (Evolution API)
+
+O agente também pode receber comandos e enviar alertas via WhatsApp, usando o [Evolution API](https://github.com/EvolutionAPI/evolution-api).
+
+**Configuração no `config.yaml`:**
+
+```yaml
+evolution_api:
+  enabled: true
+  base_url: "http://IP_DO_EVOLUTION:8080"
+  api_key: "SEU_API_KEY"
+  instance: "minha-instancia"
+  group_jid: "5511999999999-123456@g.us"
+```
+
+**Passos:**
+
+1. Tenha uma instância do Evolution API rodando com um número conectado
+2. No Evolution API, configure o webhook para apontar para:
+   ```
+   http://SEU_SERVIDOR:9700/whatsapp-webhook
+   ```
+3. Adicione no `config.yaml` os dados da instância e o JID do grupo
+
+**Comportamento:**
+
+- O agente recebe as mensagens do grupo via webhook
+- Se a mensagem começar com `/`, processa como comando
+- A resposta é enviada de volta no mesmo grupo
+- Os mesmos comandos do Telegram funcionam: `/scan@all`, `/status@server-a`, etc.
+
 ### Logs
 
 Os logs giram automaticamente por data e tamanho:

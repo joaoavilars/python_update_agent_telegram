@@ -85,6 +85,18 @@ class UpdateAgent:
             )
         self.running = False
         self.http_server = None
+        self.evolution = None
+
+        evo_cfg = self.config.get("evolution_api", {})
+        if evo_cfg.get("enabled") and evo_cfg.get("base_url"):
+            from .evolution_api import EvolutionAPI
+            self.evolution = EvolutionAPI(
+                base_url=evo_cfg["base_url"],
+                api_key=evo_cfg["api_key"],
+                instance=evo_cfg["instance"],
+                group_jid=evo_cfg.get("group_jid", ""),
+            )
+            logger.info(f"Evolution API configurado: {evo_cfg['base_url']}")
 
     def _load_config(self, path: str) -> dict:
         if not Path(path).exists():
@@ -99,6 +111,7 @@ class UpdateAgent:
                 "scan_interval_hours": 24,
                 "auto_notify": True,
                 "logging": {"max_size_mb": 10, "max_files": 30, "retention_days": 30},
+                "evolution_api": {"enabled": False},
             }
         with open(path, encoding="utf-8") as f:
             return yaml.safe_load(f)
@@ -154,6 +167,44 @@ class UpdateAgent:
                 args = body.get("args", [])
                 result = await handler.handle_command(command, args, 0)
                 return result
+
+            if self.evolution:
+                @app.post("/whatsapp-webhook")
+                async def whatsapp_webhook(request: Request):
+                    body = await request.json()
+                    parsed = self.evolution.parse_webhook(body)
+                    if not parsed:
+                        return {"status": "ignored"}
+
+                    cmd_info = self.evolution.extract_command(parsed["text"])
+                    if not cmd_info:
+                        return {"status": "not_a_command"}
+
+                    command, args, target_server = cmd_info
+                    logger.info(f"WhatsApp /{command} {' '.join(args)} (target={target_server or 'local'}) de {parsed['sender']}")
+
+                    if target_server and target_server != self.server_name and target_server in self.peers:
+                        url = self.peers[target_server]
+                        try:
+                            import httpx
+                            async with httpx.AsyncClient(timeout=300) as client:
+                                resp = await client.post(
+                                    f"{url}/command",
+                                    json={"command": command, "args": args},
+                                )
+                                if resp.status_code == 200:
+                                    data = resp.json()
+                                    resp_text = data.get("data", "Sem resposta.")
+                                else:
+                                    resp_text = f"Erro HTTP {resp.status_code} em {target_server}"
+                        except Exception as e:
+                            resp_text = f"Servidor {target_server} offline: {e}"
+                    else:
+                        response_data = await handler.handle_command(command, args, 0)
+                        resp_text = response_data.get("data", "Sem resposta.")
+
+                    await self.evolution.send_text(resp_text, parsed["jid"])
+                    return {"status": "ok"}
 
             @app.get("/health")
             async def health():

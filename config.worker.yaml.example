@@ -16,3 +16,6 @@ logging:
   log_dir: "/var/log/update-agent"
   max_size_mb: 10
   retention_days: 30
+
+evolution_api:
+  enabled: false
