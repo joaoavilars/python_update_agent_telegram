@@ -115,7 +115,7 @@ class TelegramBot:
             else:
                 await update.message.reply_text(
                     "Use `@server` para escolher o servidor.\n"
-                    "Ex: `/scan@lucanus` ou `/scan@all`\n"
+                    "Ex: `/scan@server-a` ou `/scan@all`\n"
                     "Veja servidores disponíveis com `/servers`.",
                     parse_mode="Markdown",
                 )
@@ -142,7 +142,7 @@ class TelegramBot:
             "`/servers` — Lista servidores\n"
             "`/cancel` — Cancela confirmação\n"
             "`/help` — Ajuda detalhada\n\n"
-            "Ex: `/scan@lucanus` ou `/scan@all`",
+            "Ex: `/scan@server-a` ou `/scan@all`",
             parse_mode="Markdown",
         )
 
@@ -217,7 +217,7 @@ class TelegramBot:
         if not peers and not self.server_name:
             lines.append("  Nenhum servidor configurado.")
         lines.append("")
-        lines.append("Use `@server` nos comandos.\nEx: `/scan@lucanus`")
+        lines.append("Use `@server` nos comandos.\nEx: `/scan@server-a`")
         await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
     async def _cmd_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -235,16 +235,16 @@ class TelegramBot:
         await update.message.reply_text(
             f"🤖 *Agente de Atualizações*{server_info}\n\n"
             "*Comandos:*\n"
-            "`/scan[@server]`\n  Escaneia softwares.\n  Ex: `/scan`, `/scan@lucanus`, `/scan@all`\n\n"
+            "`/scan[@server]`\n  Escaneia softwares.\n  Ex: `/scan`, `/scan@server-a`, `/scan@all`\n\n"
             "`/status[@server]`\n  Status resumido.\n\n"
             "`/skills[@server]`\n  Lista perfis.\n\n"
-            "`/simulate <nome>[@server]`\n  Simula update.\n  Ex: `/simulate 9router@lucanus`\n\n"
+            "`/simulate <nome>[@server]`\n  Simula update.\n  Ex: `/simulate meuapp@server-a`\n\n"
             "`/update <nome>[@server]`\n  Inicia update (pede confirmação depois).\n\n"
             "`/report <nome>[@server]`\n  Relatório completo.\n\n"
             "`/servers`\n  Lista servidores disponíveis.\n\n"
             "`/cancel`\n  Cancela confirmação pendente.\n\n"
             "*Fluxo:*\n"
-            "`/scan@all` → `/simulate 9router@lucanus` → `/update 9router@lucanus` → `sim` → `/report 9router@lucanus`",
+            "`/scan@all` → `/simulate meuapp@server-a` → `/update meuapp@server-a` → `sim` → `/report meuapp@server-a`",
             parse_mode="Markdown",
         )
 

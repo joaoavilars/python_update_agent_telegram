@@ -10,8 +10,8 @@ Telegram (um único bot)
     ▼
 [ Coordenador ]  ← servidor com o token do bot
     │
-    ├── HTTP → lucanus:9700   (executa comandos localmente)
-    └── HTTP → olympus:9700   (encaminha comandos via HTTP)
+    ├── HTTP → servidor-a:9700   (executa comandos localmente)
+    └── HTTP → servidor-b:9700   (encaminha comandos via HTTP)
 ```
 
 - **Coordenador**: faz polling do Telegram, roteia comandos para o servidor correto via `@server`
@@ -55,7 +55,7 @@ systemctl restart update-agent
 Arquivo: `config.yaml`
 
 ```yaml
-server_name: "lucanus"
+server_name: "servidor-a"
 listen_port: 9700
 is_coordinator: true
 
@@ -65,8 +65,8 @@ telegram:
     - SEU_CHAT_ID
 
 peers:
-  lucanus: "http://IP_LUCANUS:9700"
-  olympus: "http://IP_OLYMPUS:9700"
+  servidor-a: "http://IP_DO_SERVIDOR_A:9700"
+  servidor-b: "http://IP_DO_SERVIDOR_B:9700"
 
 skills_dir: "skills"
 scan_interval_hours: 24
@@ -77,7 +77,7 @@ scan_interval_hours: 24
 Arquivo: `config.yaml` (mesmo nome, conteúdo diferente)
 
 ```yaml
-server_name: "olympus"
+server_name: "servidor-b"
 listen_port: 9700
 is_coordinator: false
 
@@ -214,33 +214,33 @@ Cada skill define seu próprio backup:
 | `/start` | `/start` | Mensagem inicial |
 | `/help` | `/help` | Ajuda completa |
 | `/servers` | `/servers` | Lista servidores disponíveis |
-| `/scan` | `/scan@lucanus` | Escaneia softwares de um servidor |
+| `/scan` | `/scan@server-a` | Escaneia softwares de um servidor |
 | `/scan@all` | `/scan@all` | Escaneia todos os servidores |
-| `/status` | `/status@lucanus` | Status resumido |
-| `/skills` | `/skills@olympus` | Lista perfis de um servidor |
-| `/simulate` | `/simulate 9router@lucanus` | Simula update (mostra riscos) |
-| `/update` | `/update 9router@lucanus` | Inicia processo de update |
-| `/report` | `/report 9router@lucanus` | Relatório completo com histórico |
+| `/status` | `/status@server-a` | Status resumido |
+| `/skills` | `/skills@server-b` | Lista perfis de um servidor |
+| `/simulate` | `/simulate meuapp@server-a` | Simula update (mostra riscos) |
+| `/update` | `/update meuapp@server-a` | Inicia processo de update |
+| `/report` | `/report meuapp@server-a` | Relatório completo com histórico |
 | `/cancel` | `/cancel` | Cancela confirmação pendente |
-| `sim@server` | `sim@lucanus` | Confirma update no servidor X |
+| `sim@server` | `sim@server-a` | Confirma update no servidor X |
 | `nao` | `nao` | Cancela update |
 
 ### Fluxo típico
 
 ```
 /scan@all
-  → vê que 9router no lucanus está desatualizado
+  → vê que meuapp no server-a está desatualizado
 
-/simulate 9router@lucanus
+/simulate meuapp@server-a
   → mostra riscos (último update teve breaking change)
 
-/update 9router@lucanus
+/update meuapp@server-a
   → pergunta confirmação
-  → sim@lucanus
+  → sim@server-a
   → executa backup + update + validação
   → salva resultado no histórico do YAML
 
-/report 9router@lucanus
+/report meuapp@server-a
   → mostra relatório completo com o histórico
 ```
 
@@ -263,7 +263,7 @@ history:
 Na próxima simulação, essas adaptações aparecem como **riscos conhecidos**:
 
 ```
-/simulate 9router@lucanus
+/simulate meuapp@server-a
 
 Riscos identificados:
   ⚠️ 2 update(s) anterior(es) com problemas
@@ -293,7 +293,7 @@ update_agent/
 │   ├── _template.yaml               # Template para criar novos perfis
 │   ├── _exemplo_docker_wordpress.yaml   # 🚩 EXEMPLO Docker + MySQL
 │   ├── _exemplo_git_appweb.yaml         # 🚩 EXEMPLO Git pull (Node.js)
-│   ├── 9router.yaml                 # App real (Docker + Postgres)
-│   └── sistema-linux.yaml           # App real (updates do sistema apt)
+│   ├── 9router_example.yaml             # 🚩 EXEMPLO Docker + Postgres
+│   └── sistema-linux.yaml               # App real (updates do sistema apt)
 └── memory/
 ```
